@@ -98,3 +98,103 @@ flowchart LR
 **Prinsip Utama Praktikum:**  
 *Jangan membersihkan data tanpa tahu masalah apa yang sedang diperbaiki!* Setiap tindakan pembersihan data wajib didasarkan pada temuan empiris output Python dan memiliki alasan konteks yang jelas.
 
+---
+
+## 📚 Rangkuman Sintaks Slide PDF
+
+Seluruh kode dalam notebook praktikum diimplementasikan dengan kepatuhan 100% terhadap sintaks resmi slide:
+
+| Slide | Topik / Modul | Sintaks Utama Python Sesuai PDF | Fungsi / Tujuan |
+|---|---|---|---|
+| **Slide 06** | **NumPy Fondasi** | `X = np.array([...])`<br/>`X.shape`, `X.mean(axis=0)`, `X.min(axis=0)`, `X.max(axis=0)` | Representasi array numerik 2D, inspeksi dimensi, dan kalkulasi statistik kolom (`axis=0`). |
+| **Slide 07** | **Pandas Load** | `df = pd.read_csv("data_mahasiswa.csv")`<br/>`df.head()`, `df.shape`, `df.columns`, `df.info()` | Membaca data tabular CSV, cek ringkasan struktur, tipe data, dan nilai non-null. |
+| **Slide 08** | **Inspeksi Awal** | `df.isna().sum()`, `df.duplicated().sum()`, `df.describe()` | Deteksi keberadaan nilai kosong (*missing*), baris berulang (*duplikasi*), dan statistik deskriptif. |
+| **Slide 10** | **Cleaning: Missing** | `df["IPK"] = df["IPK"].fillna(df["IPK"].median())` | Imputasi nilai hilang dengan nilai median yang kebal terhadap pencilan (*outliers*). |
+| **Slide 11** | **Cleaning: Duplikasi** | `df = df.drop_duplicates()` | Menghapus observasi identik berulang agar setiap entitas unik hanya dihitung satu kali. |
+| **Slide 12** | **Cleaning: Tipe Data** | `df["Kehadiran"] = pd.to_numeric(df["Kehadiran"], errors="coerce")`<br/>`df["IPK"] = pd.to_numeric(df["IPK"], errors="coerce")` | Menjamin data numerik tidak tersimpan sebagai string teks (`object`). |
+| **Slide 13** | **Cleaning: Kategori** | `df["Status"] = df["Status"].astype(str).str.strip().str.lower()`<br/>`df["Status"] = df["Status"].replace(mapping)` | Menghilangkan spasi liar, menyamakan huruf kecil, dan memetakan ke kategori baku (`Lulus`, `Tidak Lulus`). |
+| **Slide 14** | **Validasi Pasca-Clean** | Validasi 4 Check: `shape`, `isna().sum()`, `duplicated().sum()`, `dtypes`, `value_counts()` | Memastikan dataset bersih 100% sebelum masuk tahap eksplorasi & visualisasi. |
+| **Slide 15** | **Visualisasi 1** | `plt.hist(df["IPK"], bins=6)` | Melihat bentuk distribusi frekuensi variabel numerik kontinu IPK. |
+| **Slide 16** | **Visualisasi 2** | `df.boxplot(column="Kehadiran", by="Status")` | Membandingkan sebaran distribusi persentase kehadiran terhadap status kelulusan. |
+| **Slide 17** | **Pandas GroupBy** | `df.groupby("Status").agg(...)` | Meringkas rata-rata nilai fitur prediktor per kelompok target. |
+| **Slide 18** | **Scikit-Learn Split** | `X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)` | Memisahkan matriks fitur $X$ dan target $y$, serta membagi set latih dan set uji secara jujur. |
+
+---
+
+## 🧪 Bedah Praktikum Terbimbing
+
+### 1. NumPy: Fondasi Representasi Numerik
+- Data observasi diatur dalam bentuk matriks 2D: baris menyatakan sampel observasi (mahasiswa) dan kolom menyatakan fitur numerik (`Kehadiran`, `IPK`, `Jam_Belajar`).
+- Penggunaan `axis=0` melakukan agregasi per kolom:
+  - Rata-rata Kehadiran = 84.33%
+  - Rata-rata IPK = 3.50
+  - Rata-rata Jam Belajar = 6.67 jam/minggu
+
+### 2. Investigasi Data Mentah (`data_mahasiswa.csv`)
+- **Dimensi Awal:** 21 baris dan 6 kolom.
+- **Masalah Teridentifikasi:**
+  1. *Missing Value:* Baris Maya (Kehadiran kosong) dan Fajar (IPK kosong).
+  2. *Duplikasi:* Baris mahasiswa bernama Evi tercatat 2 kali (baris 4 dan baris 20).
+  3. *Tipe Data:* Kolom Kehadiran dan IPK perlu dipastikan bertipe `float64`.
+  4. *Inkonsistensi Kategori:* Kolom Status memiliki variasi penulisan: `Lulus`, `lulus`, `LULUS`, `lulus `, `Tidak Lulus`, `tidak lulus`.
+
+### 3. Eksekusi Pembersihan & Transformasi
+- **Missing Value:** Diimputasi dengan nilai median (`IPK` median = 3.475, `Kehadiran` median = 81.0).
+- **Duplikasi:** Berhasil dibuang dengan `drop_duplicates()`, ukuran data menyusut dari 21 menjadi 20 observasi unik.
+- **Tipe Data:** Dikonversi secara eksplisit menggunakan `pd.to_numeric()`.
+- **Kategori Target:** Distandarisasi menghasilkan 13 mahasiswa Lulus dan 7 mahasiswa Tidak Lulus.
+
+### 4. Visualisasi & Eksplorasi
+- **Histogram IPK:** Menunjukkan sebaran condong ke kanan (*left-skewed*), mayoritas mahasiswa berada di rentang IPK tinggi (3.40 – 3.90).
+- **Boxplot Kehadiran vs Status:** Memperlihatkan pemisahan tegas di mana kelompok Lulus memiliki median kehadiran ~86% sedangkan kelompok Tidak Lulus memiliki median kehadiran ~68%.
+- **GroupBy Metrik:**
+  | Status | Rata-rata Kehadiran (%) | Rata-rata IPK | Rata-rata Jam Belajar (jam/minggu) |
+  |---|:---:|:---:|:---:|
+  | **Lulus** | 85.38 | 3.58 | 6.77 |
+  | **Tidak Lulus** | 66.00 | 3.05 | 3.43 |
+
+### 5. Scikit-Learn Train-Test Split
+- Fitur $X$: `['Kehadiran', 'IPK', 'Jam_Belajar']` berdimensi `(20, 3)`.
+- Target $y$: `['Status']` berdimensi `(20,)`.
+- Pembagian data dengan `test_size=0.2` dan `random_state=42`:
+  - `X_train`: **16 baris, 3 kolom**
+  - `X_test`: **4 baris, 3 kolom**
+
+---
+
+## 🎯 Latihan Mandiri di Colab
+
+### Latihan A: Strategi Missing Value (Median vs Mean)
+- **Hasil Kuantitatif:**
+  - Nilai Median IPK: **3.4750**
+  - Nilai Mean IPK: **3.3975**
+  - Selisih Imputasi: **0.0775**
+- **Interpretasi (3–5 Kalimat):**
+  1. Pengisian *missing value* menggunakan nilai median menghasilkan angka 3.4750, sedangkan strategi mean menghasilkan angka 3.3975 dengan selisih absolut sebesar 0.0775.
+  2. Perbedaan nilai ini terjadi karena rata-rata (*mean*) sangat dipengaruhi oleh observasi bernilai rendah seperti Joko (IPK 2.75) dan Deni (IPK 2.90) yang menarik nilai rata-rata keseluruhan ke bawah.
+  3. Sebaliknya, median lebih kebal (*robust*) terhadap kemiringan sebaran (*skewness*) karena median hanya mengambil titik tengah dari data yang diurutkan.
+  4. Pada dataset berukuran kecil dengan distribusi yang condong (*skewed*), imputasi median lebih direkomendasikan karena merepresentasikan kecenderungan sentral data secara lebih realistis tanpa mendistorsi sebaran asli mahasiswa.
+
+---
+
+### Latihan B: Scatter Plot Kehadiran vs IPK
+- **Visualisasi:** Scatter plot dengan pembedaan warna hijau untuk `Lulus` dan merah untuk `Tidak Lulus`, lengkap dengan label sumbu, judul, dan legenda.
+- **Interpretasi (3–5 Kalimat):**
+  1. Scatter plot memperlihatkan adanya pola korelasi positif yang sangat kuat dan teratur antara tingkat kehadiran dengan capaian IPK mahasiswa.
+  2. Terlihat pengelompokan (*clustering*) visual yang sangat nyata: mahasiswa yang Lulus berkumpul di area kanan atas dengan kehadiran $\ge 75\%$ dan IPK $\ge 3.20$.
+  3. Sementara itu, seluruh mahasiswa yang Tidak Lulus terisolasi di area kiri bawah dengan kehadiran $<75\%$ dan IPK $<3.20$.
+  4. Batas pemisah linier yang jelas antara kedua kelompok ini mengindikasikan bahwa model klasifikasi (seperti Logistic Regression atau SVM) akan mampu mempelajari pola keputusan (*decision boundary*) dengan tingkat akurasi yang sangat tinggi.
+
+---
+
+### Latihan C: Ubah `test_size` (0.2 → 0.3)
+- **Perbandingan Ukuran:**
+  - `test_size=0.2` (80:20): Data Train = **16 baris**, Data Test = **4 baris**.
+  - `test_size=0.3` (70:30): Data Train = **14 baris**, Data Test = **6 baris**.
+  - Perubahan: Data Train berkurang 2 baris, Data Test bertambah 2 baris.
+- **Interpretasi (3–5 Kalimat):**
+  1. Mengubah parameter `test_size` dari 0.2 menjadi 0.3 menggeser pembagian data dari formasi 16 data latih dan 4 data uji menjadi 14 data latih dan 6 data uji.
+  2. Penambahan data uji menjadi 6 sampel memberikan dasar evaluasi yang sedikit lebih representatif untuk menguji ketahanan generalisasi model terhadap ragam sampel baru.
+  3. Namun, karena dataset ini memiliki ukuran sampel yang terbatas (total 20 observasi), berkurangnya data latih menjadi 14 sampel dapat membatasi kemampuan model dalam mempelajari variasi data secara menyeluruh.
+  4. Eksperimen ini menegaskan pentingnya menyeimbangkan *trade-off* antara ketersediaan data latih yang cukup untuk proses belajar model dengan kecukupan data uji untuk pengujian performa yang objektif.
+
