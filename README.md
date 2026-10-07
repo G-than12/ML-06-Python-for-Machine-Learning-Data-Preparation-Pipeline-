@@ -198,3 +198,87 @@ Seluruh kode dalam notebook praktikum diimplementasikan dengan kepatuhan 100% te
   3. Namun, karena dataset ini memiliki ukuran sampel yang terbatas (total 20 observasi), berkurangnya data latih menjadi 14 sampel dapat membatasi kemampuan model dalam mempelajari variasi data secara menyeluruh.
   4. Eksperimen ini menegaskan pentingnya menyeimbangkan *trade-off* antara ketersediaan data latih yang cukup untuk proses belajar model dengan kecukupan data uji untuk pengujian performa yang objektif.
 
+---
+
+## 🏆 Challenge: Temukan 3 Masalah Data
+
+Penyelesaian challenge dilakukan pada dataset khusus: `data_mahasiswa_challenge.csv` dengan menerapkan kerangka 4 langkah sistematis:
+
+```mermaid
+flowchart TD
+    Step1["1. TEMUKAN<br/>Tunjukkan bukti dari output Python"] --> Step2["2. PERBAIKI<br/>Gunakan kode perbaikan yang tepat"]
+    Step2 --> Step3["3. VALIDASI<br/>Buktikan masalah sudah tertangani"]
+    Step3 --> Step4["4. JELASKAN<br/>Uraikan dampak fatal jika tidak diperbaiki"]
+    
+    style Step1 fill:#2980b9,stroke:#1b4f72,color:#fff
+    style Step2 fill:#e67e22,stroke:#ba4a00,color:#fff
+    style Step3 fill:#27ae60,stroke:#1e8449,color:#fff
+    style Step4 fill:#c0392b,stroke:#922b21,color:#fff
+```
+
+### Masalah 1: Missing Values
+- **1. Temukan:** `df_ch.isna().sum()` mendeteksi 1 nilai kosong pada `Kehadiran` (Mira) dan 1 nilai kosong pada `IPK` (Farhan).
+- **2. Perbaiki:** Imputasi nilai median fitur: `df_ch['Kehadiran'].fillna(median)` dan `df_ch['IPK'].fillna(median)`.
+- **3. Validasi:** `df_ch.isna().sum()` menghasilkan angka 0 di seluruh kolom.
+- **4. Jelaskan Dampak:** Model Scikit-Learn (seperti Logistic Regression atau SVM) akan langsung mengalami *crash* saat pelatihan dengan pesan error `ValueError: Input contains NaN, infinity or a value too large for dtype('float64')`.
+
+### Masalah 2: Duplikasi Baris
+- **1. Temukan:** `df_ch.duplicated().sum()` mendeteksi 1 baris duplikat penuh, yaitu mahasiswa bernama Kevin yang tercatat pada indeks 10 dan 25.
+- **2. Perbaiki:** `df_ch = df_ch.drop_duplicates()`.
+- **3. Validasi:** Duplikasi berkurang menjadi 0 dan dimensi data berkurang dari 26 menjadi 25 baris.
+- **4. Jelaskan Dampak:** Menimbulkan bias pembobotan ganda pada sampel tertentu dan memicu *overfitting*. Jika baris duplikat terpisah ke train dan test set, terjadi kebocoran data (*data leakage*) yang menghasilkan metrik akurasi palsu (*overoptimistic*).
+
+### Masalah 3: Format Desimal Tanda Koma & Tipe Data String
+- **1. Temukan:** Kolom `IPK` bertipe data `object` (string) karena nilai IPK mahasiswa bernama Vino tertulis `"3,55"` menggunakan tanda koma desimal berkutip.
+- **2. Perbaiki:** `df_ch['IPK'] = pd.to_numeric(df_ch['IPK'].astype(str).str.replace(',', '.'), errors='coerce')`.
+- **3. Validasi:** Kolom `IPK` berhasil bertransformasi menjadi tipe data `float64` dan fungsi statistik `mean()` dapat dijalankan.
+- **4. Jelaskan Dampak:** Matriks aljabar linier dan algoritma ML tidak dapat melakukan operasi aritmatika pada teks string, memicu fatal runtime error `ValueError: could not convert string to float: '3,55'`.
+
+### Masalah 4 (Bonus Temuan): Inkonsistensi Kategori Target Status
+- **1. Temukan:** `value_counts()` menampilkan 7 variasi label status karena perbedaan spasi (`lulus `, ` Tidak Lulus`) dan huruf besar/kecil (`lulus`, `LULUS`).
+- **2. Perbaiki:** `.astype(str).str.strip().str.lower().replace({'lulus': 'Lulus', 'tidak lulus': 'Tidak Lulus'})`.
+- **3. Validasi:** Target konsisten menjadi 2 kategori biner: `Lulus` dan `Tidak Lulus`.
+- **4. Jelaskan Dampak:** Model biner keliru menganggap masalah sebagai multi-kelas 7 kategori, merusak formulasi fungsi loss (*cross-entropy*) dan evaluasi metrik akurasi.
+
+---
+
+## ✅ Checklist Ketercapaian (Refleksi)
+
+Semua target ketercapaian pada Slide 23 telah terpenuhi (Target: 6/6):
+
+| No | Target Ketercapaian Slide 23 | Status | Bukti Pembuktian Kode / Penjelasan |
+|:---:|---|:---:|---|
+| 1 | **Membaca CSV menjadi DataFrame** | ✅ Tercapai | Menggunakan `pd.read_csv("data_mahasiswa.csv")` untuk memuat data mentah menjadi objek tabel terstruktur. |
+| 2 | **Mengecek missing value dan duplikasi** | ✅ Tercapai | Menggunakan `df.isna().sum()` dan `df.duplicated().sum()` untuk mendeteksi data cacat. |
+| 3 | **Memperbaiki tipe data yang tidak sesuai** | ✅ Tercapai | Menggunakan `pd.to_numeric(..., errors='coerce')` dan `.str.replace(',', '.')` untuk menstandarkan kolom numerik. |
+| 4 | **Membuat minimal dua visualisasi** | ✅ Tercapai | Menghasilkan Histogram Distribusi IPK, Boxplot Kehadiran vs Status, serta Scatter Plot Kehadiran vs IPK. |
+| 5 | **Memahami perbedaan fitur ($X$) dan target ($y$)** | ✅ Tercapai | Memisahkan matriks independen $X$ (`Kehadiran`, `IPK`, `Jam_Belajar`) dari vektor dependen $y$ (`Status`). |
+| 6 | **Menjelaskan urgensi data cleaning sebelum modeling** | ✅ Tercapai | Memaparkan prinsip GIGO, pencegahan eksepsi runtime Scikit-Learn, mitigasi bias, dan pencegahan *data leakage*. |
+
+---
+
+## 🚀 Cara Menjalankan Notebook
+
+### Prasyarat Dependensi:
+Pastikan Python 3.9+ dan pustaka berikut telah terinstal pada environment Anda:
+```bash
+pip install numpy pandas matplotlib scikit-learn jupyter
+```
+
+### Menjalankan Jupyter Notebook:
+1. Buka terminal pada folder proyek ini:
+   ```bash
+   cd "c:\Users\LENOVO\Documents\PERSONAL GATHAN\PROJECT 2026\ML\MAKUL ML pertemuan 6"
+   ```
+2. Jalankan server Jupyter Notebook:
+   ```bash
+   jupyter notebook 059_GathanHilabi_Pertemuan06.ipynb
+   ```
+3. Atau jalankan di VS Code / Antigravity IDE dengan membuka file `059_GathanHilabi_Pertemuan06.ipynb` dan memilih kernel Python yang aktif.
+4. Pilih menu **Run All** untuk mengeksekusi seluruh 74 sel (sel teks markdown dan sel kode berserta output grafik visual).
+
+---
+
+<div align="center">
+  <b>© 2026 Gathan Hilabi (60324059) • INF2542 Pembelajaran Mesin • Pertemuan 06</b>
+</div>
